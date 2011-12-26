@@ -1,7 +1,8 @@
 import java.util.*;
 
 public class Compressor {
-	private static final int MAX_ACTIVE_PROGRAM_COUNT = 1000000;
+	private static final int MAX_ACTIVE_PROGRAM_COUNT = 200000,
+	                         BRANCHING_FACTOR = Program.INSTRUCTIONS.length;
 
 	// find (if exists) a program of length at most as many bytes as
 	// the input, that has xs as a prefix of its output, and that
@@ -11,7 +12,7 @@ public class Compressor {
 	}
 
 	public Program compress(byte[] xs, int a, int b) {
-		PriorityQueue<Program> to_be_extrapolated = new PriorityQueue<Program>(MAX_ACTIVE_PROGRAM_COUNT);
+		PriorityQueue<Program> to_be_extrapolated = new PriorityQueue<Program>(MAX_ACTIVE_PROGRAM_COUNT*BRANCHING_FACTOR);
 		PriorityQueue<Program> ps = new PriorityQueue<Program>(MAX_ACTIVE_PROGRAM_COUNT);
 
 		try {
@@ -49,7 +50,7 @@ public class Compressor {
 	
 				// maybe add more to the fringe
 				Program r;
-				while (ps.size() < MAX_ACTIVE_PROGRAM_COUNT - Program.INSTRUCTIONS.length
+				while (ps.size() < MAX_ACTIVE_PROGRAM_COUNT - BRANCHING_FACTOR
 						&& (r = to_be_extrapolated.poll()) != null) {
 					for (Program q: r.successors()) {
 						if (q == null || q.illegal()) continue;
