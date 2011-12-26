@@ -273,7 +273,7 @@ public class Program implements Comparable<Program> {
 		if (!finished() && instructions[instruction_pointer] == '.')
 			return 0;
 		// having output is a good thing -- likely to get more output
-		return instructions.length - output_pointer + Util.ilog2(execution_time);
+		return length() - output_pointer + Util.ilog2(execution_time);
 	}
 	
 	public int compareTo(Program that) {
