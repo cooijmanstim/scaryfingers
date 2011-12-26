@@ -9,13 +9,11 @@ public class Program implements Comparable<Program> {
 		// binary operators (operands are current cell and cell
 		// to the left, result is stored in current cell)
 		'+', '-', '*', '/', '%', '|', '&', 'x',
-		//'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', // constants
 		'<', '>', // move memory pointer
 		'[', ']', // loopitypoop
 		'@', // set memory pointer to value in current cell 
 		'!', // set instruction pointer to value in current cell
 	};
-	public static boolean isConstant(byte c) { return '0' <= c && c <= '9'; }
 
 	
 	private final byte[] instructions;
@@ -108,10 +106,6 @@ public class Program implements Comparable<Program> {
 			break;
 		case '^':
 			memory[memory_pointer]++;
-			break;
-		case '0': case '1': case '2': case '3': case '4':
-		case '5': case '6': case '7': case '8': case '9':
-			memory[memory_pointer] = (byte)(instruction - '0');
 			break;
 		case '.':
 			last_output = memory[memory_pointer];
@@ -310,8 +304,6 @@ public class Program implements Comparable<Program> {
 				// (due to overflow, truncation and instruction pointer
 				// teleportation, these aren't always pointless, but meh)
 				byte a = instructions[instructions.length - 1];
-				if (isConstant(a) && isConstant(b))
-					continue;
 				for (byte[] complements: complement_pairs) {
 					if (b == complements[0] && a == complements[1] ||
 					    b == complements[1] && a == complements[0])
