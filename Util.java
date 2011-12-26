@@ -13,6 +13,11 @@ public class Util {
 		}
 		return r;
 	}
+
+	// NOTE: will just roll over if the result doesn't fit
+	public static int iexp2(int exponent) {
+		return (int)Math.pow(2, exponent);
+	}
 	
 	public static double log2(double x) {
 		return Math.log(x) / Math.log(2);

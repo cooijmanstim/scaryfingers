@@ -1,6 +1,8 @@
 import java.util.*;
 
 public class Compressor {
+	private static final int MAX_ACTIVE_PROGRAM_COUNT = 1000000;
+
 	// find (if exists) a program of length at most as many bytes as
 	// the input, that has xs as a prefix of its output, and that
 	// outputs this prefix within 2^xs.length execution steps.
@@ -9,7 +11,8 @@ public class Compressor {
 	}
 
 	public Program compress(byte[] xs, int a, int b) {
-		PriorityQueue<Program> ps = new PriorityQueue<Program>();
+		PriorityQueue<Program> to_be_extrapolated = new PriorityQueue<Program>(MAX_ACTIVE_PROGRAM_COUNT);
+		PriorityQueue<Program> ps = new PriorityQueue<Program>(MAX_ACTIVE_PROGRAM_COUNT);
 
 		try {
 			// start with the empty program
@@ -39,21 +42,30 @@ public class Compressor {
 							// put it in the queue for another round
 							ps.add(p);
 						} else {
-							// extrapolate on the program
-							for (Program q: p.successors()) {
-								if (q == null || q.illegal()) continue;
-
-								if (q.length() <= xs.length)
-									ps.add(q);
-							}
+							to_be_extrapolated.add(p);
 						}
+					}
+				}
+	
+				// maybe add more to the fringe
+				Program r;
+				while (ps.size() < MAX_ACTIVE_PROGRAM_COUNT - Program.INSTRUCTIONS.length
+						&& (r = to_be_extrapolated.poll()) != null) {
+					for (Program q: r.successors()) {
+						if (q == null || q.illegal()) continue;
+
+						if (q.length() <= xs.length)
+							ps.add(q);
 					}
 				}
 			}
 		} catch (OutOfMemoryError e) {
 			System.err.println(ps.size()+" programs active");
-			for (Program p: ps)
-				System.err.println("program "+p+"\t"+p.execution_time);
+			System.err.println(to_be_extrapolated.size()+" programs to be extrapolated");
+			Program p; int k = 0;
+			while ((p = ps.poll()) != null && k++ < 50) {
+				System.err.println("t:"+p.execution_time+"\t$:"+p.cost()+"\t"+p);
+			}
 			ps = null;
 			e.printStackTrace();
 		}
@@ -70,11 +82,11 @@ public class Compressor {
 			// binary operators (operands are current cell and cell
 			// to the left, result is stored in current cell)
 			'+', '-', '*', '/', '%', '|', '&', 'x',
-			'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', // constants
+			//'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', // constants
 			'<', '>', // move memory pointer
+			'[', ']', // loopitypoop
 			'@', // set memory pointer to value in current cell 
 			'!', // set instruction pointer to value in current cell
-			'[', ']', // loopitypoop
 		};
 		
 		private final byte[] instructions;
@@ -147,7 +159,9 @@ public class Compressor {
 			if (illegal)
 				throw new RuntimeException("program has halted");
 
-			byte instruction = instructions[instruction_pointer];
+			byte instruction = instructions[instruction_pointer++];
+			
+			//System.out.println(this + " does " + (char)instruction + " while at " + memory_pointer + " in " + Arrays.toString(memory));
 
 			switch (instruction) {
 			case '<':
@@ -176,15 +190,15 @@ public class Compressor {
 				break;
 			case '[':
 				if (memory[memory_pointer] == 0) {
-					instruction_pointer = lookupIndexOfMatchingBracketFor(instruction_pointer);
-					if (instruction_pointer < 0)
+					instruction_pointer = lookupIndexOfMatchingBracketFor(instruction_pointer - 1);
+					if (instruction_pointer < 0 || instruction_pointer >= instructions.length)
 						illegal = true;
 				}
 				break;
 			case ']':
 				if (memory[memory_pointer] != 0) {
-					instruction_pointer = lookupIndexOfMatchingBracketFor(instruction_pointer);
-					if (instruction_pointer < 0)
+					instruction_pointer = lookupIndexOfMatchingBracketFor(instruction_pointer - 1);
+					if (instruction_pointer < 0 || instruction_pointer >= instructions.length)
 						illegal = true;
 				}
 				break;
@@ -252,7 +266,6 @@ public class Compressor {
 				break;
 			}
 
-			instruction_pointer++;
 			execution_time++;
 		}
 		
@@ -286,13 +299,17 @@ public class Compressor {
 
 		// step until finished or illegal, collecting output
 		public byte[] run() {
-			StringBuilder sb = new StringBuilder();
+			List<Byte> bs = new ArrayList<Byte>();
 			while (!finished() && !illegal()) {
 				step();
-				if (sb.length() < output_pointer)
-					sb.append((char)last_output);
+				if (bs.size() < output_pointer)
+					bs.add(last_output);
 			}
-			return sb.toString().getBytes();
+			byte[] sigh = new byte[bs.size()];
+			int i = 0;
+			for (Byte rahhhh: bs)
+				sigh[i++] = rahhhh;
+			return sigh;
 		}
 
 		public String toString() {
@@ -300,7 +317,8 @@ public class Compressor {
 		}
 		
 		public int length() {
-			return instructions.length;
+			// measured in bits
+			return (int)Math.ceil(instructions.length * Util.ilog2(INSTRUCTIONS.length) / 8.0);
 		}
 
 		// returns the set of programs that are one instruction
@@ -317,8 +335,8 @@ public class Compressor {
 
 				if (instructions.length > 0) {
 					// prune some pointless branches
-					// (due to overflow and instruction pointer teleportation,
-					// these aren't always pointless, but meh)
+					// (due to overflow, truncation and instruction pointer
+					// teleportation, these aren't always pointless, but meh)
 					byte a = instructions[instructions.length - 1];
 					if (isConstant(a) && isConstant(b))
 						continue;
@@ -371,7 +389,10 @@ public class Compressor {
 		public int cost() {
 			// those about to output get high priority -- if they fail to be consistent
 			// with the target sequence, they will be discarded and their memory freed
-			return instructions[instruction_pointer] == '.' ? 0 : instructions.length + Util.ilog2(execution_time);
+			if (!finished() && instructions[instruction_pointer] == '.')
+				return 0;
+			// having output is a good thing -- likely to get more output
+			return instructions.length - output_pointer + Util.ilog2(execution_time);
 		}
 	}
 
@@ -396,7 +417,7 @@ public class Compressor {
 		            new byte[]{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
 		testProgram("^^^^^^^^^^[>^^^^^^^>^^^^^^^^^^>^^^>^<<<<v]>^^.>^.^^^^^^^..^^^.>^^.<<^^^^^^^^^^^^^^^.>.^^^.vvvvvv.vvvvvvvv.>^.>.", 5,
 		            "Hello World!\n".getBytes());
-		testProgram("2>^[.*]", 2,
-		            new byte[]{ 1, 2, 4, 8, 16, 32, 64, -17, -66, -128 });
+		testProgram("^^>^[.*]", 2,
+		            new byte[]{ 1, 2, 4, 8, 16, 32, 64, -128 });
 	}
 }
