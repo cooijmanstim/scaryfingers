@@ -22,7 +22,6 @@ The programs are in a brainfuck-inspired language.  Here's the instruction set:
 
 The extensions are intended to make the language a bit more concise than brainfuck.  They do, but it's still far from concise.  What's needed is a complete and expressive language the programs in which you can prove a bunch of things about.
 
-[1] The "cost" of a program is defined as the sum of its length and the binary logarithm of its execution time.  
-The length is measured in bits -- instructions are byte-sized but carry only four bits of information, so could easily be compressed further.
-[2] Actually, it looks like this is almost identical to http://www.scholarpedia.org/article/Universal_search
+[1]: The "cost" of a program is defined as the sum of its length and the binary logarithm of its execution time.  The length is measured in bits -- instructions are byte-sized but carry only four bits of information, so could easily be compressed further.
 
+[2]: Actually, it looks like this is almost identical to http://www.scholarpedia.org/article/Universal_search
