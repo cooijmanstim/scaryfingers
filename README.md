@@ -1,6 +1,6 @@
 This compresses a sequence xs by finding the least costly[1] program that has xs as a prefix of its output.  It does so by considering the empty program, then all programs of length 1 (said to be the "successors" of the empty program), then all programs of length 2, and so on until it has considered all possible programs (except for some provably stupid ones) shorter than xs.
 
-Note that this is a finite process if such a program exists.  All programs (of all these lengths) are stepped through in some sense in parallel.  At each point, the program with the lowest cost gets to execute one instruction.
+Note that this is a finite process if such a program exists (if the program length were not bounded, this condition would not be necessary).  All programs (of all these lengths) are stepped through in some sense in parallel.  At each point, the program with the lowest cost gets to execute one instruction.
 
 This is not necessarily a dumb idea[2], though it will utterly devour your memory.  Some heuristics are in place to increase the search depth that can be reached before the VM blows up:
   * Programs that are about to give output are inifinitely prioritized, because output, if inconsistent with the target sequence xs, allows us to disregard the program and any of its successors.  The prioritization allows this to be detected earlier, avoiding the need to keep around a program and its state in the queue unnecessarily.
