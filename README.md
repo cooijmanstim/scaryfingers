@@ -20,8 +20,8 @@ The programs are in a brainfuck-inspired language.  Here's the instruction set:
 * ! to set the instruction pointer to the value in the current cell
 * +, -, *, /, |, &, x, the usual binary operators (x is bitwise xor) that combine the values in the current cell and the cell to the left, and store the result in the current cell.
 
-The extensions are intended to make the language a bit more concise than brainfuck.  They do, but it's still far from concise.  What's needed is a complete and expressive language the programs in which you can prove a bunch of things about.
+The extensions are intended to make the language a bit more concise than brainfuck.  They do, but it's still far from concise.  Brainfuck instructions just don't convey much.  What's needed is a more expressive language, preferably one that allows you to prove a lot of useful things about its programs.
 
-[1]: The "cost" of a program is defined as the sum of its length and the binary logarithm of its execution time.  The length is measured in bits -- instructions are byte-sized but carry only four bits of information, so could easily be compressed further.
+[1] The "cost" of a program is defined as the sum of its length and the binary logarithm of its execution time.  The length is measured in bits -- instructions are byte-sized but carry only four bits of information, so could easily be compressed further.
 
-[2]: Actually, it looks like this is almost identical to http://www.scholarpedia.org/article/Universal_search
+[2] Actually, it looks like this is almost identical to http://www.scholarpedia.org/article/Universal_search
