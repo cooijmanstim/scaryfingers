@@ -2,7 +2,7 @@ import java.util.*;
 
 public class Compressor {
 	private static final int MAX_ACTIVE_PROGRAM_COUNT = 200000,
-	                         BRANCHING_FACTOR = Program.INSTRUCTIONS.length;
+	                         BRANCHING_FACTOR = BrainfuckProgram.INSTRUCTIONS.length;
 
 	// find (if exists) a program of length at most as many bytes as
 	// the input, that has xs as a prefix of its output, and that
@@ -20,7 +20,7 @@ public class Compressor {
 			// (I don't think a better-than-nothing decompressor
 			// should need more memory than the length of the
 			// sequence it represents, but I haven't proven it)
-			ps.add(new Program(b-a));
+			ps.add(new BrainfuckProgram(b-a));
 
 			while (!ps.isEmpty()) {
 				Program p = ps.remove();
@@ -36,7 +36,7 @@ public class Compressor {
 						// so it is a decompressor if time-limited
 						return p;
 						// TODO return p.freshTimeLimitedCopy();
-					} else if (!p.illegal() && !p.runaway(xs.length)) {
+					} else if (!p.illegal() && !runaway(p, xs.length)) {
 						// this program's output so far is a prefix of xs
 
 						if (!p.finished()) {
@@ -55,7 +55,7 @@ public class Compressor {
 					for (Program q: r.successors()) {
 						if (q == null || q.illegal()) continue;
 
-						if (q.length() <= xs.length)
+						if (q.codeLength() <= xs.length)
 							ps.add(q);
 					}
 				}
@@ -72,5 +72,9 @@ public class Compressor {
 		}
 		
 		return null;
+	}
+	
+	public boolean runaway(Program p, int n) {
+		return p.executionTime() > Util.iexp2(n) || p.memorySize() > n;
 	}
 }
