@@ -220,21 +220,6 @@ public class BrainfuckProgram extends Program {
 		return -1;
 	}
 
-	@Override
-	public byte[] run() {
-		List<Byte> bs = new ArrayList<Byte>();
-		while (!finished() && !illegal()) {
-			step();
-			if (bs.size() < output_pointer)
-				bs.add(last_output);
-		}
-		byte[] sigh = new byte[bs.size()];
-		int i = 0;
-		for (Byte rahhhh: bs)
-			sigh[i++] = rahhhh;
-		return sigh;
-	}
-
 	public String toString() {
 		return new String(instructions);
 	}
@@ -281,10 +266,9 @@ public class BrainfuckProgram extends Program {
 	}
 
 	@Override
-	public boolean incrementallyConsistentWith(byte[] xs) {
-		if (output_pointer == 0)
-			return true;
-		return last_output == xs[output_pointer - 1];
+	public byte lastOutput() {
+		assert(output_pointer != 0);
+		return last_output;
 	}
 
 	private static final byte[][] complement_pairs = {
